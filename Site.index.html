@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>The Educator - Complete School Management System</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS for Excel/CSV -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .app-container {
+            max-width: 550px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 48px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            min-height: 650px;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6e 100%);
+            color: white;
+            padding: 20px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .header h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+        .header h1 i { margin-right: 8px; color: #ffd700; }
+        .header p { font-size: 0.7rem; opacity: 0.85; margin-top: 4px; }
+        .user-badge {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #f8fafc;
+            max-height: 65vh;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eef2ff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+        .form-group { margin-bottom: 12px; }
+        label { font-weight: 600; font-size: 0.7rem; color: #475569; display: block; margin-bottom: 4px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 24px;
+            font-size: 0.8rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e3a5f 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: 0.2s;
+        }
+        button:active { transform: scale(0.97); }
+        button.secondary { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
+        button.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        button.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .btn-sm { width: auto; padding: 6px 12px; font-size: 0.7rem; display: inline-block; margin: 4px; }
+        .flex-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .role-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .role-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f1f5f9;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: 0.2s;
+        }
+        .role-btn.active { background: linear-gradient(135deg, #3b82f6 0%, #1e3a5f 100%); color: white; }
+        .item-card {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .badge {
+            background: #dbeafe;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 4px 4px 0 0;
+        }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fed7aa; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-number { font-size: 1.5rem; font-weight: 800; color: #1e3a5f; }
+        .message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-bottom: 12px;
+            border-left: 4px solid #10b981;
+            animation: fadeIn 0.3s;
+        }
+        .error { background: #fee2e2; color: #991b1b; border-left-color: #ef4444; }
+        .search-box { margin-bottom: 12px; }
+        .file-upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: 0.2s;
+            background: #faf5ff;
+        }
+        .file-upload-area:hover { background: #f3e8ff; border-color: #3b82f6; }
+        .progress-bar { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: #3b82f6; border-radius: 10px; transition: width 0.3s; }
+        .task-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 16px; margin-bottom: 8px; }
+        .task-done { text-decoration: line-through; opacity: 0.6; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 480px) { .app-container { border-radius: 32px; } .role-btn { font-size: 0.7rem; } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header" id="logoClickArea">
+        <h1><i class="fas fa-graduation-cap"></i> The Educator</h1>
+        <p>Complete School Management System</p>
+        <div id="userInfoDisplay" class="user-badge"><i class="fas fa-user-circle"></i> Not Logged In</div>
+    </div>
+    <div class="content" id="mainContent"></div>
+</div>
+
+<script>
+    // ======================== DATA STRUCTURE ========================
+    let schools = [{ id: "school1", name: "The Educator", code: "EDU001" }];
+    let admins = [{ id: "admin1", username: "admin", password: "admin123", schoolId: "school1", name: "School Admin" }];
+    let teachers = [{ id: "t1", name: "Mr. David Miller", email: "teacher@demo.com", password: "teacher123", schoolId: "school1" }];
+    let students = [
+        { id: "s1", name: "Emma Watson", rollNumber: "S101", password: "student123", className: "10th A", schoolId: "school1", attendance: {}, fines: [], tasks: [] },
+        { id: "s2", name: "James Wilson", rollNumber: "S102", password: "student123", className: "10th A", schoolId: "school1", attendance: {}, fines: [], tasks: [] },
+        { id: "s3", name: "Sophia Lee", rollNumber: "S201", password: "student123", className: "9th A", schoolId: "school1", attendance: {}, fines: [], tasks: [] }
+    ];
+    let classesList = [{ id: "c1", name: "10th A", schoolId: "school1" }, { id: "c2", name: "9th A", schoolId: "school1" }];
+    let homeworks = [
+        { id: "hw1", className: "10th A", subject: "Mathematics", description: "Solve Ex 5.1", dueDate: "2026-04-25", teacherId: "t1", schoolId: "school1", completedBy: [] }
+    ];
+    let events = [{ id: "e1", title: "Final Exams", date: "2026-05-10", type: "exam", schoolId: "school1" }];
+    let fines = [{ id: "f1", studentId: "s1", amount: 500, reason: "Library fine", paid: false, schoolId: "school1" }];
+    let paymentInfo = { jazzcash: "03001234567", easypaisa: "03111234567", bank: "HBL 1234-5678" };
+    let chats = [];
+    let attendanceRecords = [];
+    const SUPER_ADMIN = { username: "superadmin", password: "super123" };
+    let currentUser = null;
+    let clickCount = 0, clickTimer = null;
+    
+    function saveData() { localStorage.setItem("educatorData", JSON.stringify({ schools, admins, teachers, students, classesList, homeworks, events, fines, paymentInfo, chats, attendanceRecords })); }
+    function loadData() {
+        const saved = localStorage.getItem("educatorData");
+        if (saved) { try { const d = JSON.parse(saved); schools = d.schools || schools; admins = d.admins || admins; teachers = d.teachers || teachers; students = d.students || students; classesList = d.classesList || classesList; homeworks = d.homeworks || homeworks; events = d.events || events; fines = d.fines || fines; paymentInfo = d.paymentInfo || paymentInfo; chats = d.chats || chats; attendanceRecords = d.attendanceRecords || attendanceRecords; } catch(e) {} }
+        if(admins.length===0) admins = [{ id: "admin1", username: "admin", password: "admin123", schoolId: "school1", name: "School Admin" }];
+    }
+    loadData();
+    
+    function showMessage(msg, isError = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${isError ? 'error' : ''}`;
+        msgDiv.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+        document.getElementById("mainContent").insertBefore(msgDiv, document.getElementById("mainContent").firstChild);
+        setTimeout(() => msgDiv.remove(), 3000);
+    }
+    function renderScreen(html) { document.getElementById("mainContent").innerHTML = html; }
+    function updateHeader() {
+        if (currentUser) document.getElementById("userInfoDisplay").innerHTML = `<i class="fas fa-user-circle"></i> ${currentUser.type}: ${currentUser.name}`;
+        else document.getElementById("userInfoDisplay").innerHTML = `<i class="fas fa-user-circle"></i> Not Logged In`;
+    }
+    
+    // Hidden Super Admin
+    document.getElementById("logoClickArea").addEventListener("click", () => {
+        clickCount++;
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => clickCount = 0, 1000);
+        if (clickCount === 5) { clickCount = 0; let pwd = prompt("Enter Super Admin Password:"); if(pwd === SUPER_ADMIN.password) { currentUser = { type: "superadmin", name: "Super Admin" }; updateHeader(); renderSuperAdminPanel(); } else showMessage("Wrong password!", true); }
+    });
+    
+    function renderSuperAdminPanel() {
+        let html = `<div class="card"><div class="card-title"><i class="fas fa-globe"></i> Super Admin - Manage Schools</div><button id="logoutBtn" class="secondary btn-sm">Logout</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-plus-circle"></i> Create New School</div><div class="flex-row"><input type="text" id="schoolName" placeholder="School Name"><input type="text" id="schoolCode" placeholder="Code"></div><button id="createSchoolBtn">Create School</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-building"></i> All Schools</div>${schools.map(s => `<div class="item-card"><strong>${s.name}</strong> (${s.code})<button class="btn-sm danger delete-school" data-id="${s.id}" style="background:#ef4444;">Delete</button></div>`).join('')}</div>`;
+        renderScreen(html);
+        document.getElementById("logoutBtn")?.addEventListener("click", logout);
+        document.getElementById("createSchoolBtn")?.addEventListener("click", () => {
+            let name = document.getElementById("schoolName").value, code = document.getElementById("schoolCode").value;
+            if (name && code) { schools.push({ id: Date.now()+"", name, code }); saveData(); renderSuperAdminPanel(); showMessage("School created!"); }
+            else showMessage("Fill all", true);
+        });
+        document.querySelectorAll(".delete-school").forEach(btn => btn.addEventListener("click", (e) => { let id = btn.dataset.id; schools = schools.filter(s => s.id !== id); admins = admins.filter(a => a.schoolId !== id); teachers = teachers.filter(t => t.schoolId !== id); students = students.filter(s => s.schoolId !== id); classesList = classesList.filter(c => c.schoolId !== id); homeworks = homeworks.filter(h => h.schoolId !== id); saveData(); renderSuperAdminPanel(); showMessage("School deleted"); }));
+    }
+    
+    function renderLoginScreen() {
+        let html = `<div class="card"><h3 style="text-align:center">Login to The Educator</h3><div class="role-buttons"><div class="role-btn" data-role="admin">🏫 Admin</div><div class="role-btn" data-role="teacher">👨‍🏫 Teacher</div><div class="role-btn" data-role="student">🎓 Student</div><div class="role-btn" data-role="parent">👪 Parent</div></div><div id="loginForm"></div></div>`;
+        renderScreen(html);
+        let selected = "admin";
+        document.querySelectorAll(".role-btn").forEach(btn => {
+            btn.addEventListener("click", () => { document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active")); btn.classList.add("active"); selected = btn.dataset.role; renderLoginForm(selected); });
+        });
+        document.querySelector(".role-btn").classList.add("active");
+        renderLoginForm("admin");
+    }
+    
+    function renderLoginForm(role) {
+        const container = document.getElementById("loginForm");
+        if (role === "admin") container.innerHTML = `<input type="text" id="adminUser" placeholder="Username"><input type="password" id="adminPass" placeholder="Password"><button id="loginAdminBtn">Login</button><p style="font-size:0.7rem;margin-top:8px;">Demo: admin / admin123</p>`;
+        else if (role === "teacher") container.innerHTML = `<input type="email" id="teacherEmail" placeholder="Email"><input type="password" id="teacherPass" placeholder="Password"><button id="loginTeacherBtn">Login</button><p style="font-size:0.7rem;">teacher@demo.com / teacher123</p>`;
+        else if (role === "student") container.innerHTML = `<input type="text" id="studentRoll" placeholder="Roll Number"><input type="password" id="studentPass" placeholder="Password"><button id="loginStudentBtn">Login</button><p style="font-size:0.7rem;">S101 / student123</p>`;
+        else container.innerHTML = `<input type="text" id="parentRoll" placeholder="Child Roll Number"><button id="loginParentBtn">View as Parent</button><p style="font-size:0.7rem;">Enter S101 to see child data</p>`;
+        
+        document.getElementById("loginAdminBtn")?.addEventListener("click", () => { let user = admins.find(a => a.username === document.getElementById("adminUser").value && a.password === document.getElementById("adminPass").value); if (user) { currentUser = { type: "admin", id: user.id, name: user.name, schoolId: user.schoolId, username: user.username }; updateHeader(); renderAdminPanel(); } else showMessage("Invalid", true); });
+        document.getElementById("loginTeacherBtn")?.addEventListener("click", () => { let t = teachers.find(t => t.email === document.getElementById("teacherEmail").value && t.password === document.getElementById("teacherPass").value); if (t) { currentUser = { type: "teacher", id: t.id, name: t.name, schoolId: t.schoolId }; updateHeader(); renderTeacherPanel(); } else showMessage("Invalid", true); });
+        document.getElementById("loginStudentBtn")?.addEventListener("click", () => { let s = students.find(s => s.rollNumber === document.getElementById("studentRoll").value && s.password === document.getElementById("studentPass").value); if (s) { currentUser = { type: "student", id: s.id, name: s.name, rollNumber: s.rollNumber, className: s.className, schoolId: s.schoolId }; updateHeader(); renderStudentPanel(); } else showMessage("Invalid", true); });
+        document.getElementById("loginParentBtn")?.addEventListener("click", () => { let roll = document.getElementById("parentRoll").value; let s = students.find(s => s.rollNumber === roll); if (s) { currentUser = { type: "parent", childId: s.id, childName: s.name, className: s.className, schoolId: s.schoolId }; updateHeader(); renderParentPanel(); } else showMessage("Roll number not found", true); });
+    }
+    
+    // ADMIN PANEL - Full Featured
+    function renderAdminPanel() {
+        const schoolStudents = students.filter(s => s.schoolId === currentUser.schoolId);
+        const schoolTeachers = teachers.filter(t => t.schoolId === currentUser.schoolId);
+        const schoolClasses = classesList.filter(c => c.schoolId === currentUser.schoolId);
+        const schoolHomeworks = homeworks.filter(h => h.schoolId === currentUser.schoolId);
+        const classStats = schoolClasses.map(c => ({ name: c.name, hwCount: schoolHomeworks.filter(h=>h.className===c.name).length, studentCount: schoolStudents.filter(s=>s.className===c.name).length }));
+        const weakClass = classStats.sort((a,b)=>a.hwCount - b.hwCount)[0];
+        const topClass = classStats.sort((a,b)=>b.hwCount - a.hwCount)[0];
+        
+        let html = `<div class="card"><div class="card-title"><i class="fas fa-school"></i> Admin: ${admins.find(a=>a.id===currentUser.id)?.name || "Admin"}</div><div class="flex-row"><button id="changeAdminUsername" class="secondary btn-sm">Change Username</button><button id="changeAdminPwd" class="secondary btn-sm">Change Password</button><button id="logoutBtn" class="secondary btn-sm">Logout</button></div></div>
+        <div class="card"><div class="card-title"><i class="fas fa-chart-line"></i> Class Progress Analytics</div><div class="stats-grid"><div class="stat-card"><div class="stat-number">${weakClass?.name || 'N/A'}</div><div>📉 Weak Class (Less HW)</div></div><div class="stat-card"><div class="stat-number">${topClass?.name || 'N/A'}</div><div>📈 Top Class (Most HW)</div></div></div><canvas id="progressChart" style="margin-top:10px;"></canvas></div>
+        <div class="card"><div class="card-title"><i class="fas fa-users"></i> Manage Classes</div>${schoolClasses.map(c => `<div class="item-card">${c.name}<button class="btn-sm delete-class" data-id="${c.id}" style="background:#ef4444;">Delete</button></div>`).join('')}<input type="text" id="newClass" placeholder="New Class Name"><button id="addClassBtn">+ Add Class</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-chalkboard-user"></i> Manage Teachers</div>${schoolTeachers.map(t => `<div class="item-card">${t.name} (${t.email})<button class="btn-sm edit-teacher" data-id="${t.id}">Edit</button><button class="btn-sm delete-teacher" data-id="${t.id}" style="background:#ef4444;">Del</button></div>`).join('')}<input type="text" id="teacherName" placeholder="Name"><input type="email" id="teacherEmail" placeholder="Email"><input type="text" id="teacherPwd" placeholder="Password"><button id="addTeacherBtn">+ Add Teacher</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-user-graduate"></i> Manage Students + Bulk Upload</div><div class="file-upload-area" id="excelUpload"><i class="fas fa-cloud-upload-alt"></i> Upload Excel/CSV<br><small>Format: Name, Roll, Class, Password</small><input type="file" id="excelFile" accept=".xlsx,.csv" style="display:none;"></div><button id="clearAllStudentsBtn" class="danger btn-sm" style="background:#ef4444;">⚠️ Clear All Students</button><div class="search-box"><input type="text" id="searchRoll" placeholder="🔍 Search by Roll Number"><button id="searchBtn">Search</button><div id="searchResult"></div></div>${schoolStudents.map(s => `<div class="item-card"><strong>${s.name}</strong> (${s.rollNumber}) - ${s.className}<button class="btn-sm edit-student" data-id="${s.id}">Edit</button><button class="btn-sm delete-student" data-id="${s.id}" style="background:#ef4444;">Del</button></div>`).join('')}<input type="text" id="studentName" placeholder="Name"><input type="text" id="studentRoll" placeholder="Roll"><input type="text" id="studentClass" placeholder="Class"><input type="text" id="studentPwd" placeholder="Password"><button id="addStudentBtn">+ Add Student</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-calendar"></i> Events</div>${events.filter(e=>e.schoolId===currentUser.schoolId).map(e => `<div class="item-card">📅 ${e.title} - ${e.date} (${e.type})<button class="btn-sm delete-event" data-id="${e.id}" style="background:#ef4444;">Del</button></div>`).join('')}<input type="text" id="eventTitle" placeholder="Event Title"><input type="date" id="eventDate"><select id="eventType"><option value="exam">Exam</option><option value="holiday">Holiday</option><option value="function">Function</option></select><button id="addEventBtn">+ Add Event</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-money-bill"></i> Fees / Fine System</div><div><strong>Payment Info:</strong> JazzCash: ${paymentInfo.jazzcash} | EasyPaisa: ${paymentInfo.easypaisa}<button id="editPaymentBtn" class="btn-sm">Edit</button></div><input type="text" id="searchFine" placeholder="🔍 Search student by name"><button id="searchFineBtn">Search Fine</button><div id="fineSearchResult"></div><select id="fineStudent"><option value="">Select Student</option>${schoolStudents.map(s => `<option value="${s.id}">${s.name} (${s.rollNumber})</option>`).join('')}</select><input type="number" id="fineAmount" placeholder="Amount"><input type="text" id="fineReason" placeholder="Reason"><button id="addFineBtn">Add Fine</button><div id="finesList">${fines.filter(f => schoolStudents.some(s=>s.id===f.studentId)).map(f => `<div class="item-card">${students.find(s=>s.id===f.studentId)?.name}: Rs ${f.amount} - ${f.reason} ${f.paid ? '✅ Paid' : '❌ Unpaid'}</div>`).join('')}</div></div>
+        <div class="card"><div class="card-title"><i class="fas fa-comments"></i> PRO Chat System</div><select id="chatTarget"><option value="all">Send to All</option><option value="teachers">All Teachers</option><option value="students">All Students</option>${schoolTeachers.map(t=>`<option value="teacher_${t.id}">Teacher: ${t.name}</option>`)}${schoolStudents.map(s=>`<option value="student_${s.id}">Student: ${s.name}</option>`)}</select><textarea id="chatMsg" rows="2" placeholder="Type your message..."></textarea><button id="sendChatBtn">Send Message</button><div id="chatList">${chats.filter(c=>c.schoolId===currentUser.schoolId).slice(-8).reverse().map(c => `<div class="item-card"><small><strong>${c.from}:</strong> ${c.message}</small></div>`).join('')}</div></div>`;
+        renderScreen(html);
+        
+        // Chart
+        const ctx = document.getElementById('progressChart')?.getContext('2d');
+        if(ctx) new Chart(ctx, { type: 'bar', data: { labels: classStats.map(c=>c.name), datasets: [{ label: 'Homework Count', data: classStats.map(c=>c.hwCount), backgroundColor: '#3b82f6', borderRadius: 10 }] } });
+        
+        document.getElementById("logoutBtn")?.addEventListener("click", logout);
+        document.getElementById("changeAdminUsername")?.addEventListener("click", () => { let newUser = prompt("New username:"); if(newUser) { let a = admins.find(a=>a.id===currentUser.id); if(a) { a.username = newUser; currentUser.username = newUser; saveData(); showMessage("Username changed!"); renderAdminPanel(); } } });
+        document.getElementById("changeAdminPwd")?.addEventListener("click", () => { let newPwd = prompt("New password:"); if(newPwd) { let a = admins.find(a=>a.id===currentUser.id); if(a) a.password = newPwd; saveData(); showMessage("Password changed!"); } });
+        document.getElementById("addClassBtn")?.addEventListener("click", () => { let name = document.getElementById("newClass").value; if(name) { classesList.push({ id: Date.now()+"", name, schoolId: currentUser.schoolId }); saveData(); renderAdminPanel(); } });
+        document.getElementById("addTeacherBtn")?.addEventListener("click", () => { let name=document.getElementById("teacherName").value, email=document.getElementById("teacherEmail").value, pwd=document.getElementById("teacherPwd").value; if(name && email && pwd) { teachers.push({ id: Date.now()+"", name, email, password: pwd, schoolId: currentUser.schoolId }); saveData(); renderAdminPanel(); } });
+        document.getElementById("addStudentBtn")?.addEventListener("click", () => { let name=document.getElementById("studentName").value, roll=document.getElementById("studentRoll").value, cls=document.getElementById("studentClass").value, pwd=document.getElementById("studentPwd").value; if(name && roll && cls && pwd) { students.push({ id: Date.now()+"", name, rollNumber: roll, password: pwd, className: cls, schoolId: currentUser.schoolId, attendance: {}, fines: [], tasks: [] }); saveData(); renderAdminPanel(); } });
+        document.getElementById("addEventBtn")?.addEventListener("click", () => { let title=document.getElementById("eventTitle").value, date=document.getElementById("eventDate").value, type=document.getElementById("eventType").value; if(title && date) { events.push({ id: Date.now()+"", title, date, type, schoolId: currentUser.schoolId }); saveData(); renderAdminPanel(); } });
+        document.getElementById("addFineBtn")?.addEventListener("click", () => { let sid=document.getElementById("fineStudent").value, amt=document.getElementById("fineAmount").value, reason=document.getElementById("fineReason").value; if(sid && amt) { fines.push({ id: Date.now()+"", studentId: sid, amount: parseInt(amt), reason, paid: false, schoolId: currentUser.schoolId }); saveData(); renderAdminPanel(); } });
+        document.getElementById("editPaymentBtn")?.addEventListener("click", () => { paymentInfo.jazzcash = prompt("JazzCash:", paymentInfo.jazzcash) || paymentInfo.jazzcash; paymentInfo.easypaisa = prompt("EasyPaisa:", paymentInfo.easypaisa) || paymentInfo.easypaisa; saveData(); renderAdminPanel(); });
+        document.getElementById("sendChatBtn")?.addEventListener("click", () => { let msg = document.getElementById("chatMsg").value; let target = document.getElementById("chatTarget").value; if(msg) { chats.push({ from: "Admin", to: target, message: msg, timestamp: Date.now(), schoolId: currentUser.schoolId }); saveData(); showMessage("Message sent!"); renderAdminPanel(); } });
+        document.getElementById("searchBtn")?.addEventListener("click", () => { let roll = document.getElementById("searchRoll").value; let s = students.find(s => s.rollNumber === roll && s.schoolId === currentUser.schoolId); document.getElementById("searchResult").innerHTML = s ? `<div class="item-card">${s.name} - ${s.className}<button class="btn-sm delete-student" data-id="${s.id}" style="background:#ef4444;">Delete</button></div>` : "<p>Not found</p>"; if(s) document.querySelector(".delete-student")?.addEventListener("click", () => { students = students.filter(st => st.id !== s.id); saveData(); renderAdminPanel(); }); });
+        document.getElementById("searchFineBtn")?.addEventListener("click", () => { let name = document.getElementById("searchFine").value.toLowerCase(); let matched = students.filter(s=>s.name.toLowerCase().includes(name) && s.schoolId===currentUser.schoolId); document.getElementById("fineSearchResult").innerHTML = matched.map(s=>`<div class="item-card">${s.name} (${s.rollNumber}) - Fines: ${fines.filter(f=>f.studentId===s.id).reduce((a,b)=>a+b.amount,0)} Rs</div>`).join(''); });
+        document.getElementById("clearAllStudentsBtn")?.addEventListener("click", () => { if(confirm("⚠️ Delete ALL students? This cannot be undone!")) { students = students.filter(s => s.schoolId !== currentUser.schoolId); saveData(); renderAdminPanel(); showMessage("All students deleted!"); } });
+        
+        // Bulk Upload
+        const uploadArea = document.getElementById("excelUpload");
+        const fileInput = document.getElementById("excelFile");
+        uploadArea?.addEventListener("click", () => fileInput.click());
+        fileInput?.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+                rows.forEach(row => {
+                    let name = row.Name || row.name, roll = row.Roll || row.rollNumber, cls = row.Class || row.className, pwd = row.Password || row.password;
+                    if(name && roll && cls && pwd && !students.find(s=>s.rollNumber===roll.toString())) {
+                        students.push({ id: Date.now()+"_"+Math.random(), name, rollNumber: roll.toString(), password: pwd.toString(), className: cls, schoolId: currentUser.schoolId, attendance: {}, fines: [], tasks: [] });
+                    }
+                });
+                saveData();
+                showMessage(`Imported ${rows.length} students!`);
+                renderAdminPanel();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        document.querySelectorAll(".delete-class, .delete-teacher, .delete-student, .delete-event").forEach(btn => btn.addEventListener("click", (e) => { let id = btn.dataset.id; if(btn.classList.contains("delete-class")) classesList = classesList.filter(c=>c.id!==id); if(btn.classList.contains("delete-teacher")) teachers = teachers.filter(t=>t.id!==id); if(btn.classList.contains("delete-student")) students = students.filter(s=>s.id!==id); if(btn.classList.contains("delete-event")) events = events.filter(e=>e.id!==id); saveData(); renderAdminPanel(); }));
+    }
+    
+    // TEACHER PANEL
+    function renderTeacherPanel() {
+        let myClasses = [...new Set(students.filter(s=>s.schoolId===currentUser.schoolId).map(s=>s.className))];
+        let html = `<div class="card"><div class="card-title"><i class="fas fa-chalkboard-user"></i> Teacher: ${currentUser.name}</div><button id="changeTeacherPwd" class="secondary btn-sm">Change Password</button><button id="logoutBtn" class="secondary btn-sm">Logout</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-check-circle"></i> Mark Attendance</div><select id="attClass">${myClasses.map(c=>`<option>${c}</option>`)}</select><div id="attendanceList"></div><button id="saveAttendanceBtn">Save Attendance</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-plus"></i> Add Homework</div><select id="hwClass">${myClasses.map(c=>`<option>${c}</option>`)}</select><input id="hwSubj" placeholder="Subject"><textarea id="hwDesc" rows="2"></textarea><input id="hwDue" type="date"><button id="addHwBtn">Publish</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-comment"></i> Chat System</div><select id="chatTarget"><option value="admin">Admin</option><option value="parents">All Parents</option></select><textarea id="chatMsg" rows="2" placeholder="Message..."></textarea><button id="sendChatBtn">Send</button><div id="chatList">${chats.filter(c=>c.schoolId===currentUser.schoolId && (c.from===currentUser.name || c.to===currentUser.name)).slice(-5).map(c=>`<div class="item-card">${c.from}: ${c.message}</div>`).join('')}</div></div>`;
+        renderScreen(html);
+        document.getElementById("logoutBtn")?.addEventListener("click", logout);
+        document.getElementById("changeTeacherPwd")?.addEventListener("click", () => { let newPwd = prompt("New password:"); if(newPwd) { let t = teachers.find(t=>t.id===currentUser.id); if(t) t.password = newPwd; saveData(); showMessage("Password changed!"); } });
+        document.getElementById("addHwBtn")?.addEventListener("click", () => { let cls=document.getElementById("hwClass").value, subj=document.getElementById("hwSubj").value, desc=document.getElementById("hwDesc").value, due=document.getElementById("hwDue").value; if(cls && subj && desc) { homeworks.push({ id: Date.now()+"", className: cls, subject: subj, description: desc, dueDate: due, teacherId: currentUser.id, schoolId: currentUser.schoolId, completedBy: [] }); saveData(); showMessage("Homework added!"); renderTeacherPanel(); } });
+        document.getElementById("sendChatBtn")?.addEventListener("click", () => { let msg = document.getElementById("chatMsg").value; if(msg) { chats.push({ from: currentUser.name, to: "Admin", message: msg, timestamp: Date.now(), schoolId: currentUser.schoolId }); saveData(); showMessage("Sent!"); renderTeacherPanel(); } });
+        document.getElementById("attClass")?.addEventListener("change", loadAttendance);
+        function loadAttendance() { let cls = document.getElementById("attClass").value; let classStudents = students.filter(s=>s.className===cls && s.schoolId===currentUser.schoolId); let html = classStudents.map(s => `<div><input type="checkbox" id="att_${s.id}"> ${s.name}</div>`).join(''); document.getElementById("attendanceList").innerHTML = html; }
+        document.getElementById("saveAttendanceBtn")?.addEventListener("click", () => { let cls = document.getElementById("attClass").value; let classStudents = students.filter(s=>s.className===cls && s.schoolId===currentUser.schoolId); classStudents.forEach(s => { let isPresent = document.getElementById(`att_${s.id}`)?.checked; attendanceRecords.push({ studentId: s.id, date: new Date().toISOString().split('T')[0], status: isPresent ? "present" : "absent", classId: cls, schoolId: currentUser.schoolId }); }); saveData(); showMessage("Attendance saved!"); });
+        loadAttendance();
+    }
+    
+    // STUDENT PANEL with Tasks
+    function renderStudentPanel() {
+        let myHomeworks = homeworks.filter(h => h.className === currentUser.className && h.schoolId === currentUser.schoolId);
+        let myAttendance = attendanceRecords.filter(a => a.studentId === currentUser.id);
+        let presentCount = myAttendance.filter(a => a.status === "present").length;
+        let myFines = fines.filter(f => f.studentId === currentUser.id);
+        let schoolEvents = events.filter(e => e.schoolId === currentUser.schoolId);
+        let student = students.find(s=>s.id===currentUser.id);
+        let tasks = student?.tasks || [];
+        
+        let html = `<div class="card"><div class="card-title"><i class="fas fa-user-graduate"></i> Student: ${currentUser.name}</div><button id="changeStudentPwd" class="secondary btn-sm">Change Password</button><button id="logoutBtn" class="secondary btn-sm">Logout</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-tasks"></i> My Daily Tasks / Routine</div><div id="taskList">${tasks.map((t,idx)=>`<div class="task-item"><input type="checkbox" class="task-check" data-idx="${idx}" ${t.done ? 'checked' : ''}><span class="${t.done ? 'task-done' : ''}">${t.text}</span><button class="btn-sm delete-task" data-idx="${idx}" style="background:#ef4444;">Del</button></div>`).join('')}</div><div class="flex-row"><input type="text" id="newTask" placeholder="New task..." style="flex:1"><button id="addTaskBtn" class="btn-sm">Add Task</button></div></div>
+        <div class="card"><div class="card-title"><i class="fas fa-book"></i> Homework</div>${myHomeworks.map(h => `<div class="item-card"><strong>${h.subject}</strong><br>${h.description}<br><span class="badge">Due: ${h.dueDate}</span></div>`).join('')}</div>
+        <div class="card"><div class="card-title"><i class="fas fa-calendar-check"></i> Attendance</div><div class="stat-card"><div class="stat-number">${presentCount}/${myAttendance.length || 1}</div><div>Present Days</div></div></div>
+        <div class="card"><div class="card-title"><i class="fas fa-calendar-alt"></i> Events</div>${schoolEvents.map(e => `<div class="item-card">📅 ${e.title} - ${e.date}</div>`).join('')}</div>
+        <div class="card"><div class="card-title"><i class="fas fa-money-bill"></i> Fines</div>${myFines.map(f => `<div class="item-card">Rs ${f.amount} - ${f.reason} ${f.paid ? '✅ Paid' : '❌ Unpaid'}</div>`).join('')}<div class="badge">📞 Pay: JazzCash ${paymentInfo.jazzcash}</div></div>
+        <div class="card"><div class="card-title"><i class="fas fa-comment"></i> Chat with Teacher</div><textarea id="chatMsg" rows="2" placeholder="Message to teacher..."></textarea><button id="sendChatBtn">Send</button><div id="chatList">${chats.filter(c=>c.schoolId===currentUser.schoolId && (c.from===currentUser.name || c.to===currentUser.name)).slice(-3).map(c=>`<div class="item-card">${c.from}: ${c.message}</div>`).join('')}</div></div>`;
+        renderScreen(html);
+        
+        document.getElementById("logoutBtn")?.addEventListener("click", logout);
+        document.getElementById("changeStudentPwd")?.addEventListener("click", () => { let newPwd = prompt("New password:"); if(newPwd) { let s = students.find(s=>s.id===currentUser.id); if(s) s.password = newPwd; saveData(); showMessage("Password changed!"); } });
+        document.getElementById("addTaskBtn")?.addEventListener("click", () => { let taskText = document.getElementById("newTask").value; if(taskText && student) { student.tasks.push({ text: taskText, done: false }); saveData(); renderStudentPanel(); } });
+        document.querySelectorAll(".task-check").forEach(cb => cb.addEventListener("change", (e) => { if(student) { student.tasks[e.target.dataset.idx].done = e.target.checked; saveData(); } }));
+        document.querySelectorAll(".delete-task").forEach(btn => btn.addEventListener("click", (e) => { if(student) { student.tasks.splice(e.target.dataset.idx, 1); saveData(); renderStudentPanel(); } }));
+        document.getElementById("sendChatBtn")?.addEventListener("click", () => { let msg = document.getElementById("chatMsg").value; if(msg) { chats.push({ from: currentUser.name, to: "Teacher", message: msg, timestamp: Date.now(), schoolId: currentUser.schoolId }); saveData(); showMessage("Sent!"); renderStudentPanel(); } });
+    }
+    
+    // PARENT PANEL
+    function renderParentPanel() {
+        let myHomeworks = homeworks.filter(h => h.className === currentUser.className && h.schoolId === currentUser.schoolId);
+        let myFines = fines.filter(f => f.studentId === currentUser.childId);
+        let schoolEvents = events.filter(e => e.schoolId === currentUser.schoolId);
+        let html = `<div class="card"><div class="card-title"><i class="fas fa-users"></i> Parent Viewing: ${currentUser.childName}</div><button id="logoutBtn" class="secondary btn-sm">Logout</button></div>
+        <div class="card"><div class="card-title"><i class="fas fa-book"></i> Homework</div>${myHomeworks.map(h => `<div class="item-card"><strong>${h.subject}</strong><br>${h.description}<br><span class="badge">Due: ${h.dueDate}</span></div>`).join('')}</div>
+        <div class="card"><div class="card-title"><i class="fas fa-calendar-alt"></i> Events</div>${schoolEvents.map(e => `<div class="item-card">📅 ${e.title} - ${e.date}</div>`).join('')}</div>
+        <div class="card"><div class="card-title"><i class="fas fa-money-bill"></i> Fines</div>${myFines.map(f => `<div class="item-card">Rs ${f.amount} - ${f.reason}</div>`).join('')}</div>
+        <div class="card"><div class="card-title"><i class="fas fa-comment"></i> Chat with Teacher</div><textarea id="chatMsg" rows="2" placeholder="Message to teacher..."></textarea><button id="sendChatBtn">Send</button></div>`;
+        renderScreen(html);
+        document.getElementById("logoutBtn")?.addEventListener("click", logout);
+        document.getElementById("sendChatBtn")?.addEventListener("click", () => { let msg = document.getElementById("chatMsg").value; if(msg) { chats.push({ from: "Parent of "+currentUser.childName, to: "Teacher", message: msg, timestamp: Date.now(), schoolId: currentUser.schoolId }); saveData(); showMessage("Sent!"); } });
+    }
+    
+    function logout() { currentUser = null; updateHeader(); renderLoginScreen(); }
+    renderLoginScreen();
+</script>
+</body>
+</html>
